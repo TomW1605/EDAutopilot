@@ -152,7 +152,6 @@ def ship():
                     ship['status'] = 'in_space'
                     
                 elif log_event == 'Undocked':
-#                     ship['status'] = 'starting_undocking'
                     ship['status'] = 'in_space'
                     
                 elif log_event == 'DockingRequested':
@@ -571,7 +570,6 @@ def sun_percent():
     screen = get_screen((1/3)*SCREEN_WIDTH, (1/3)*SCREEN_HEIGHT,(2/3)*SCREEN_WIDTH, (2/3)*SCREEN_HEIGHT)
     filtered = filter_sun(screen)
     white = np.sum(filtered == 255)
-    total = (1/3)*SCREEN_WIDTH*(1/3)*SCREEN_HEIGHT
     black = np.sum(filtered != 255)
     result = white / black
     return result * 100
@@ -581,7 +579,6 @@ def sun_percent():
 def get_compass_image(testing=False):
     compass_template = cv2.imread(resource_path("templates/compass.png"), cv2.IMREAD_GRAYSCALE)
     compass_width, compass_height = compass_template.shape[::-1]
-    compass_image = compass_template.copy()
     doubt = 10
     while True:
         screen = get_screen((5/16)*SCREEN_WIDTH, (5/8)*SCREEN_HEIGHT,(2/4)*SCREEN_WIDTH, (15/16)*SCREEN_HEIGHT)
@@ -816,7 +813,6 @@ def align():
             off = get_navpoint_offset(last=off)
             ang = x_angle(off)
 
-        ang = x_angle(off)
         while (off['y'] > close) or               (off['y'] < -close):
 
             if off['y'] > close:
@@ -827,7 +823,6 @@ def align():
             if ship()['status'] == 'starting_hyperspace':
                 return
             off = get_navpoint_offset(last=off)
-            ang = x_angle(off)
             
         off = get_navpoint_offset(last=off)
         ang = x_angle(off)
@@ -908,13 +903,10 @@ def refuel(refuel_threshold=33):
     if ship()['status'] != 'in_supercruise':
         logging.error('refuel=err1')
         return False
-        raise Exception('not ready to refuel')
         
     if ship()['fuel_percent'] < refuel_threshold and ship()['star_class'] in scoopable_stars:
         logging.debug('refuel= start refuel')
         send(keys['SetSpeed100'])
-    #     while not ship()['is_scooping']:
-    #         sleep(1)
         sleep(4)
         logging.debug('refuel= wait for refuel')
         send(keys['SetSpeedZero'], repeat=3)
@@ -997,8 +989,6 @@ def autopilot():
     logging.info('\n'+200*'-'+'\n'+'---- AUTOPILOT START '+179*'-'+'\n'+200*'-')
     logging.info('get_latest_log='+str(get_latest_log(PATH_LOG_FILES)))
     logging.debug('ship='+str(ship()))
-#     if ship()['target']:
-#         undock()
     while ship()['target']:
         if ship()['status'] == 'in_space' or ship()['status'] == 'in_supercruise':
             logging.info('\n'+200*'-'+'\n'+'---- AUTOPILOT ALIGN '+179*'-'+'\n'+200*'-')
