@@ -644,7 +644,7 @@ def get_navpoint_offset(testing=False, last=None):
                 same_last_count = 0
             if same_last_count > 5:
                 same_last_count = 0
-                if random() < .9:
+                if rand.random() < .9:
                     result = {'x': 1, 'y': 100}
                 else:
                     result = {'x': 100, 'y': 1}
@@ -768,7 +768,7 @@ def dock():
 def x_angle(point=None):
     if not point:
         return None
-    result = degrees(atan(point['y']/point['x']))
+    result = math.degrees(math.atan(point['y']/point['x']))
     if point['x'] > 0:
         return +90 - result
     else:
