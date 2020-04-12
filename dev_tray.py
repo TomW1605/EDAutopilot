@@ -70,8 +70,8 @@ def tray():
         MenuItem('Exit', lambda : exit_action())
     )
 
-    keyboard.add_hotkey('home', start_action)
-    keyboard.add_hotkey('end', stop_action)
+    keyboard.add_hotkey('page up', start_action)
+    keyboard.add_hotkey('page down', stop_action)
 
     icon.run(setup)
 
