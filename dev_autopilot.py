@@ -71,11 +71,6 @@ logger.info('This is an INFO message. These information is usually used for conv
 logger.warning('some warning message. These information is usually used for warning')
 logger.error('some error message. These information is usually used for errors and should not happen')
 logger.critical('some critical message. These information is usually used for critical error, and will usually result in an exception.')
-
-
-# In[184]:
-
-
 logging.info('\n'+200*'-'+'\n'+'---- AUTOPILOT DATA '+180*'-'+'\n'+200*'-')
 
 # Constants
