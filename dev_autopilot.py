@@ -251,6 +251,7 @@ keys_to_obtain = [
         'HeadLookReset',
         'PrimaryFire',
         'SecondaryFire'
+        'MouseReset'
     ]
 
 def get_bindings(keys_to_obtain=keys_to_obtain):
@@ -363,6 +364,8 @@ def send(key, hold=None, repeat=1, repeat_delay=None, state=None):
 # Clear input
 def clear_input(to_clear=None):
     logging.info('\n'+200*'-'+'\n'+'---- CLEAR INPUT '+183*'-'+'\n'+200*'-')
+    send(to_clear['SetSpeedZero'])
+    send(to_clear['MouseReset'])
     for key in to_clear.keys():
         if key in keys:
             send(to_clear[key], state=0)
