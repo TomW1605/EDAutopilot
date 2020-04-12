@@ -26,7 +26,7 @@ import math
 import random as rand
 from time import sleep
 import numpy as np
-from pil import ImageGrab
+from PIL import ImageGrab
 from datetime import datetime
 from xml.etree.ElementTree import parse
 import cv2  # see reference 2
