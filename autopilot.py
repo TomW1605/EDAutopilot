@@ -1,9 +1,12 @@
-from dev_tray import tray
-from dev_autopilot import resource_path, RELEASE
-import requests
 import tkinter as tk
-from tkinter import messagebox
 import webbrowser
+from tkinter import messagebox
+
+import requests
+
+from dev_autopilot import resource_path, RELEASE
+from dev_tray import tray
+
 
 def update():
     releases_url = 'https://api.github.com/repos/skai2/EDAutopilot/releases'
@@ -25,6 +28,7 @@ def update():
     except Exception as e:
         print(e)
     return False
+
 
 if __name__ == '__main__':
     if not update():
