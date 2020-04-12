@@ -1,5 +1,5 @@
 from pystray import Icon, MenuItem, Menu
-from PIL import Image # big
+from pil import Image  # big
 from dev_autopilot import autopilot, resource_path, get_bindings, clear_input, set_scanner, RELEASE
 from src.directinput import *
 import threading

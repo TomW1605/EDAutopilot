@@ -22,16 +22,16 @@ import datetime
 from os import environ, listdir
 from os.path import join, isfile, getmtime, abspath
 from json import loads
-from math import degrees, atan
-from random import random
+import math
+import random as rand
 from time import sleep
-from numpy import array, sum, where
-from PIL import ImageGrab
+import numpy as np
+from pil import ImageGrab
 from datetime import datetime
 from xml.etree.ElementTree import parse
-import cv2 # see reference 2
-from src.directinput import * # see reference 5
-from pyautogui import size# see reference 6
+import cv2  # see reference 2
+from src.directinput import *  # see reference 5
+from pyautogui import size  # see reference 6
 import logging
 import colorlog
 
@@ -379,7 +379,7 @@ def clear_input(to_clear=None):
 
 # Get screen
 def get_screen(x_left, y_top, x_right, y_bot):
-    screen = array(ImageGrab.grab(bbox=(x_left, y_top, x_right, y_bot)))
+    screen = np.array(ImageGrab.grab(bbox=(x_left, y_top, x_right, y_bot)))
     screen = cv2.cvtColor(screen, cv2.COLOR_RGB2BGR)
     return screen
     
@@ -425,8 +425,8 @@ def hsv_slider(bandw=False):
         ihighV = cv2.getTrackbarPos('highV', 'image')
 
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        lower_hsv = array([ilowH, ilowS, ilowV])
-        higher_hsv = array([ihighH, ihighS, ihighV])
+        lower_hsv = np.array([ilowH, ilowS, ilowV])
+        higher_hsv = np.array([ihighH, ihighS, ihighV])
         mask = cv2.inRange(hsv, lower_hsv, higher_hsv)
 
         frame = cv2.bitwise_and(frame, frame, mask=mask)
@@ -471,7 +471,7 @@ def filter_bright(image=None, testing=False):
         equalized = equalize(img)
         equalized = cv2.cvtColor(equalized, cv2.COLOR_GRAY2BGR)
         equalized = cv2.cvtColor(equalized, cv2.COLOR_BGR2HSV)
-        filtered = cv2.inRange(equalized, array([0, 0, 215]), array([0, 0, 255]))
+        filtered = cv2.inRange(equalized, np.array([0, 0, 215]), np.array([0, 0, 255]))
         if testing:
             cv2.imshow('Filtered', filtered)
             if cv2.waitKey(25) & 0xFF == ord('q'):
@@ -492,7 +492,7 @@ def filter_sun(image=None, testing=False):
         # converting from BGR to HSV color space
         hsv = cv2.cvtColor(hsv, cv2.COLOR_BGR2HSV)
         # filter Elite UI orange
-        filtered = cv2.inRange(hsv, array([0, 100, 240]), array([180, 255, 255]))
+        filtered = cv2.inRange(hsv, np.array([0, 100, 240]), np.array([180, 255, 255]))
         if testing:
             cv2.imshow('Filtered', filtered)
             if cv2.waitKey(25) & 0xFF == ord('q'):
@@ -513,7 +513,7 @@ def filter_orange(image=None, testing=False):
         # converting from BGR to HSV color space
         hsv = cv2.cvtColor(hsv, cv2.COLOR_BGR2HSV)
         # filter Elite UI orange
-        filtered = cv2.inRange(hsv, array([0, 130, 123]), array([25, 235, 220]))
+        filtered = cv2.inRange(hsv, np.array([0, 130, 123]), np.array([25, 235, 220]))
         if testing:
             cv2.imshow('Filtered', filtered)
             if cv2.waitKey(25) & 0xFF == ord('q'):
@@ -534,7 +534,7 @@ def filter_orange2(image=None, testing=False):
         # converting from BGR to HSV color space
         hsv = cv2.cvtColor(hsv, cv2.COLOR_BGR2HSV)
         # filter Elite UI orange
-        filtered = cv2.inRange(hsv, array([15, 220, 220]), array([30, 255, 255]))
+        filtered = cv2.inRange(hsv, np.array([15, 220, 220]), np.array([30, 255, 255]))
         if testing:
             cv2.imshow('Filtered', filtered)
             if cv2.waitKey(25) & 0xFF == ord('q'):
@@ -555,7 +555,7 @@ def filter_blue(image=None, testing=False):
         # converting from BGR to HSV color space
         hsv = cv2.cvtColor(hsv, cv2.COLOR_BGR2HSV)
         # filter Elite UI orange
-        filtered = cv2.inRange(hsv, array([0, 0, 200]), array([180, 100, 255]))
+        filtered = cv2.inRange(hsv, np.array([0, 0, 200]), np.array([180, 100, 255]))
         if testing:
             cv2.imshow('Filtered', filtered)
             if cv2.waitKey(25) & 0xFF == ord('q'):
@@ -570,9 +570,9 @@ def filter_blue(image=None, testing=False):
 def sun_percent():
     screen = get_screen((1/3)*SCREEN_WIDTH, (1/3)*SCREEN_HEIGHT,(2/3)*SCREEN_WIDTH, (2/3)*SCREEN_HEIGHT)
     filtered = filter_sun(screen)
+    white = np.sum(filtered == 255)
     total = (1/3)*SCREEN_WIDTH*(1/3)*SCREEN_HEIGHT
-    white = sum(filtered == 255)
-    black = sum(filtered != 255)
+    black = np.sum(filtered != 255)
     result = white / black
     return result * 100
 
