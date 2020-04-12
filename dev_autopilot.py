@@ -581,28 +581,30 @@ def get_compass_image(testing=False):
         compass_template = cv2.imread(resource_path("templates/compass_small.png"), cv2.IMREAD_GRAYSCALE)
     compass_width, compass_height = compass_template.shape[::-1]
     doubt = 10
-    while True:
-        screen = get_screen((5/16)*SCREEN_WIDTH, (5/8)*SCREEN_HEIGHT,(2/4)*SCREEN_WIDTH, (15/16)*SCREEN_HEIGHT)
-#         mask_orange = filter_orange(screen)
-        equalized = equalize(screen)
-        match = cv2.matchTemplate(equalized, compass_template, cv2.TM_CCOEFF_NORMED)
-        threshold = 0.3
-        loc = where( match >= threshold)
-        pt = (doubt, doubt)
-        for point in zip(*loc[::-1]):
-                pt = point
-        compass_image = screen[pt[1]-doubt : pt[1]+compass_height+doubt, pt[0]-doubt : pt[0]+compass_width+doubt].copy()
-        if testing:
-            cv2.rectangle(screen, pt, (pt[0] + compass_width, pt[1] + compass_height), (0,0,255), 2)
-            cv2.imshow('Compass Found', screen)
-            cv2.imshow('Compass Mask', equalized)
+    screen = get_screen((5/16)*SCREEN_WIDTH, (5/8)*SCREEN_HEIGHT,(2/4)*SCREEN_WIDTH, (15/16)*SCREEN_HEIGHT)
+    equalized = equalize(screen)
+    match = cv2.matchTemplate(equalized, compass_template, cv2.TM_CCOEFF_NORMED)
+    threshold = 0.2
+    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(match)
+    pt = (0, 0)
+    if max_val >= threshold:
+        pt = max_loc
+    compass_image = screen[pt[1]-doubt : pt[1]+compass_height+doubt, pt[0]-doubt : pt[0]+compass_width+doubt].copy()
+    if testing:
+        cv2.rectangle(screen, (pt[0] - doubt, pt[1] - doubt), (pt[0] + (compass_width + doubt), pt[1] + (compass_height + doubt)), (0, 0, 255), 2)
+        loc = np.where(match >= threshold)
+        pts = tuple(zip(*loc[::-1]))
+        match = cv2.cvtColor(match, cv2.COLOR_GRAY2RGB)
+        for p in pts:
+            cv2.circle(match, p, 1, (0, 0, 255), 1)
+        cv2.circle(match, pt, 5, (0, 255, 0), 3)
+        cv2.imshow('Compass Found', screen)
+        cv2.imshow('Compass Mask', equalized)
+        cv2.imshow('Compass Match', match)
+        if compass_image.shape[0] > 0 and compass_image.shape[1] > 0:
             cv2.imshow('Compass', compass_image)
-            if cv2.waitKey(25) & 0xFF == ord('q'):
-                cv2.destroyAllWindows()
-                break
-        else:
-            break
-    return compass_image, compass_width+(2*doubt), compass_height+(2*doubt)
+        cv2.waitKey(1)
+    return compass_image, compass_width + (2 * doubt), compass_height + (2 * doubt)
 
 
 # Get navpoint offset
@@ -615,28 +617,23 @@ def get_navpoint_offset(testing=False, last=None):
     else:
         navpoint_template = cv2.imread(resource_path("templates/navpoint_small.png"), cv2.IMREAD_GRAYSCALE)
     navpoint_width, navpoint_height = navpoint_template.shape[::-1]
+    compass_image, compass_width, compass_height = get_compass_image()
+    filtered = filter_blue(compass_image)
+    # filtered = filter_bright(compass_image)
+    match = cv2.matchTemplate(filtered, navpoint_template, cv2.TM_CCOEFF_NORMED)
+    threshold = 0.5
+    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(match)
     pt = (0, 0)
-    while True:
-        compass_image, compass_width, compass_height = get_compass_image()
-        mask_blue = filter_blue(compass_image)
-#         filtered = filter_bright(compass_image)
-        match = cv2.matchTemplate(mask_blue, navpoint_template, cv2.TM_CCOEFF_NORMED)
-        threshold = 0.5
-        loc = where( match >= threshold)
-        for point in zip(*loc[::-1]):
-                pt = point
-        final_x = (pt[0] + ((1/2)*navpoint_width)) - ((1/2)*compass_width)
-        final_y = ((1/2)*compass_height) - (pt[1] + ((1/2)*navpoint_height))
-        if testing:
-            cv2.rectangle(compass_image, pt, (pt[0] + navpoint_width, pt[1] + navpoint_height), (0,0,255), 2)
-            cv2.imshow('Navpoint Found', compass_image)
-            cv2.imshow('Navpoint Mask', mask_blue)
-            if cv2.waitKey(25) & 0xFF == ord('q'):
-                cv2.destroyAllWindows()
-                break
-        else:
-            break
-    if pt[0] == 0 and pt[1] == 0:
+    if max_val >= threshold:
+        pt = max_loc
+    final_x = (pt[0] + ((1/2)*navpoint_width)) - ((1/2)*compass_width)
+    final_y = ((1/2)*compass_height) - (pt[1] + ((1/2)*navpoint_height))
+    if testing:
+        cv2.rectangle(compass_image, pt, (pt[0] + navpoint_width, pt[1] + navpoint_height), (0,0,255), 2)
+        cv2.imshow('Navpoint Found', compass_image)
+        # cv2.imshow('Navpoint Mask', filtered)
+        cv2.waitKey(1)
+    if pt == (0, 0):
         if last:
             if last == last_last:
                 same_last_count = same_last_count + 1
@@ -666,30 +663,24 @@ def get_destination_offset(testing=False):
     else:
         destination_template = cv2.imread(resource_path("templates/destination_small.png"), cv2.IMREAD_GRAYSCALE)
     destination_width, destination_height = destination_template.shape[::-1]
-    pt = (0, 0)
     width = (1/3)*SCREEN_WIDTH
     height = (1/3)*SCREEN_HEIGHT
-    while True:
-        screen = get_screen((1/3)*SCREEN_WIDTH, (1/3)*SCREEN_HEIGHT,(2/3)*SCREEN_WIDTH, (2/3)*SCREEN_HEIGHT)
-        mask_orange = filter_orange2(screen)
-#         equalized = equalize(screen)
-        match = cv2.matchTemplate(mask_orange, destination_template, cv2.TM_CCOEFF_NORMED)
-        threshold = 0.2
-        loc = where( match >= threshold)
-        for point in zip(*loc[::-1]):
-                pt = point
-        final_x = (pt[0] + ((1/2)*destination_width)) - ((1/2)*width)
-        final_y = ((1/2)*height) - (pt[1] + ((1/2)*destination_height))
-        if testing:
-            cv2.rectangle(screen, pt, (pt[0] + destination_width, pt[1] + destination_height), (0,0,255), 2)
-            cv2.imshow('Destination Found', screen)
-            cv2.imshow('Destination Mask', mask_orange)
-            if cv2.waitKey(25) & 0xFF == ord('q'):
-                cv2.destroyAllWindows()
-                break
-        else:
-            break
-    if pt[0] == 0 and pt[1] == 0:
+    screen = get_screen((1/3)*SCREEN_WIDTH, (1/3)*SCREEN_HEIGHT,(2/3)*SCREEN_WIDTH, (2/3)*SCREEN_HEIGHT)
+    filtered = filter_orange2(screen)
+    match = cv2.matchTemplate(filtered, destination_template, cv2.TM_CCOEFF_NORMED)
+    threshold = 0.2
+    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(match)
+    pt = (0, 0)
+    if max_val >= threshold:
+        pt = max_loc
+    final_x = (pt[0] + ((1/2)*destination_width)) - ((1/2)*width)
+    final_y = ((1/2)*height) - (pt[1] + ((1/2)*destination_height))
+    if testing:
+        cv2.rectangle(screen, pt, (pt[0] + destination_width, pt[1] + destination_height), (0, 0, 255), 2)
+        cv2.imshow('Destination Found', screen)
+        cv2.imshow('Destination Mask', filtered)
+        cv2.waitKey(1)
+    if pt == (0, 0):
         result = None
     else:
         result = {'x':final_x, 'y':final_y}
