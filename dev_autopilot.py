@@ -251,7 +251,7 @@ keys_to_obtain = [
     'CycleNextPanel',
     'HeadLookReset',
     'PrimaryFire',
-    'SecondaryFire'
+    'SecondaryFire',
     'MouseReset'
 ]
 
