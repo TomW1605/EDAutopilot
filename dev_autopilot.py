@@ -580,9 +580,11 @@ def sun_percent():
 # Get compass image
 def get_compass_image(testing=False):
     if SCREEN_WIDTH == 3840:
-        compass_template = cv2.imread(resource_path("templates/compass_large.png"), cv2.IMREAD_GRAYSCALE)
+        compass_template = cv2.imread(resource_path("templates/compass_3840.png"), cv2.IMREAD_GRAYSCALE)
+    elif SCREEN_WIDTH == 2560:
+        compass_template = cv2.imread(resource_path("templates/compass_2560.png"), cv2.IMREAD_GRAYSCALE)
     else:
-        compass_template = cv2.imread(resource_path("templates/compass_small.png"), cv2.IMREAD_GRAYSCALE)
+        compass_template = cv2.imread(resource_path("templates/compass_1920.png"), cv2.IMREAD_GRAYSCALE)
     compass_width, compass_height = compass_template.shape[::-1]
     doubt = 10
     screen = get_screen((5/16)*SCREEN_WIDTH, (5/8)*SCREEN_HEIGHT, (2/4)*SCREEN_WIDTH, (15/16)*SCREEN_HEIGHT)
@@ -619,9 +621,11 @@ last_last = {'x': 1, 'y': 100}
 def get_navpoint_offset(testing=False, last=None):
     global same_last_count, last_last
     if SCREEN_WIDTH == 3840:
-        navpoint_template = cv2.imread(resource_path("templates/navpoint_large.png"), cv2.IMREAD_GRAYSCALE)
+        navpoint_template = cv2.imread(resource_path("templates/navpoint_3840.png"), cv2.IMREAD_GRAYSCALE)
+    elif SCREEN_WIDTH == 2560:
+        navpoint_template = cv2.imread(resource_path("templates/navpoint_2560.png"), cv2.IMREAD_GRAYSCALE)
     else:
-        navpoint_template = cv2.imread(resource_path("templates/navpoint_small.png"), cv2.IMREAD_GRAYSCALE)
+        navpoint_template = cv2.imread(resource_path("templates/navpoint_1920.png"), cv2.IMREAD_GRAYSCALE)
     navpoint_width, navpoint_height = navpoint_template.shape[::-1]
     compass_image, compass_width, compass_height = get_compass_image()
     filtered = filter_blue(compass_image)
@@ -665,9 +669,11 @@ def get_navpoint_offset(testing=False, last=None):
 # Get destination offset
 def get_destination_offset(testing=False):
     if SCREEN_WIDTH == 3840:
-        destination_template = cv2.imread(resource_path("templates/destination_large.png"), cv2.IMREAD_GRAYSCALE)
+        destination_template = cv2.imread(resource_path("templates/destination_3840.png"), cv2.IMREAD_GRAYSCALE)
+    elif SCREEN_WIDTH == 2560:
+        destination_template = cv2.imread(resource_path("templates/destination_2560.png"), cv2.IMREAD_GRAYSCALE)
     else:
-        destination_template = cv2.imread(resource_path("templates/destination_small.png"), cv2.IMREAD_GRAYSCALE)
+        destination_template = cv2.imread(resource_path("templates/destination_1920.png"), cv2.IMREAD_GRAYSCALE)
     destination_width, destination_height = destination_template.shape[::-1]
     width = (1/3)*SCREEN_WIDTH
     height = (1/3)*SCREEN_HEIGHT
