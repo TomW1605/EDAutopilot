@@ -579,23 +579,41 @@ def sun_percent():
 
 # Get compass image
 def get_compass_image(testing=False):
-    if SCREEN_WIDTH == 3840:
-        compass_template = cv2.imread(resource_path("templates/compass_3840.png"), cv2.IMREAD_GRAYSCALE)
-    elif SCREEN_WIDTH == 2560:
-        compass_template = cv2.imread(resource_path("templates/compass_2560.png"), cv2.IMREAD_GRAYSCALE)
-    else:
-        compass_template = cv2.imread(resource_path("templates/compass_1920.png"), cv2.IMREAD_GRAYSCALE)
-    compass_width, compass_height = compass_template.shape[::-1]
-    doubt = 10
-    screen = get_screen((5/16)*SCREEN_WIDTH, (5/8)*SCREEN_HEIGHT, (2/4)*SCREEN_WIDTH, (15/16)*SCREEN_HEIGHT)
-    equalized = equalize(screen)
-    match = cv2.matchTemplate(equalized, compass_template, cv2.TM_CCOEFF_NORMED)
-    threshold = 0.2
-    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(match)
-    pt = (0, 0)
-    if max_val >= threshold:
-        pt = max_loc
-    compass_image = screen[pt[1]-doubt: pt[1]+compass_height+doubt, pt[0]-doubt: pt[0]+compass_width+doubt].copy()
+    while True:
+        if SCREEN_WIDTH == 3840:
+            compass_template = cv2.imread(resource_path("templates/compass_3840.png"), cv2.IMREAD_GRAYSCALE)
+        elif SCREEN_WIDTH == 2560:
+            compass_template = cv2.imread(resource_path("templates/compass_2560.png"), cv2.IMREAD_GRAYSCALE)
+        else:
+            compass_template = cv2.imread(resource_path("templates/compass_1920.png"), cv2.IMREAD_GRAYSCALE)
+        compass_width, compass_height = compass_template.shape[::-1]
+        doubt = 10
+        screen = get_screen((5/16)*SCREEN_WIDTH, (5/8)*SCREEN_HEIGHT, (2/4)*SCREEN_WIDTH, (15/16)*SCREEN_HEIGHT)
+        equalized = equalize(screen)
+        match = cv2.matchTemplate(equalized, compass_template, cv2.TM_CCOEFF_NORMED)
+        threshold = 0.2
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(match)
+        pt = (doubt, doubt)
+        if max_val >= threshold:
+            pt = max_loc
+
+        compass_image = screen[pt[1]-doubt: pt[1]+compass_height+doubt, pt[0]-doubt: pt[0]+compass_width+doubt].copy()
+        if compass_image.size == 0:
+            # Something has gone seriously wrong, we need to try again.
+            logging.debug("get_compass_image] pt=" + str(pt))
+            logging.debug("get_compass_image] doubt=" + str(doubt))
+            logging.debug("get_compass_image] screen-tentative=" + str(screen[pt[1] - doubt: pt[1] + compass_height + doubt, pt[0] - doubt: pt[0] + compass_width + doubt]))
+            logging.debug("get_compass_image(b)]                      pt[1]=" + str(pt[1]))
+            logging.debug("get_compass_image(b)]                pt[1]-doubt=" + str(pt[1]-doubt))
+            logging.debug("get_compass_image(b)]             compass_height=" + str(compass_height))
+            logging.debug("get_compass_image(b)] pt[1]+compass_height+doubt=" + str(pt[1]+compass_height+doubt))
+            logging.debug("get_compass_image(b)]                      pt[0]=" + str(pt[0]))
+            logging.debug("get_compass_image(b)]                pt[0]-doubt=" + str(pt[0]-doubt))
+            logging.debug("get_compass_image(b)]              compass_width=" + str(compass_width))
+            logging.debug("get_compass_image(b)]  pt[0]+compass_width+doubt=" + str(pt[0]+compass_height+doubt))
+            continue
+        break
+
     if testing:
         cv2.rectangle(screen, (pt[0]-doubt, pt[1]-doubt), (pt[0]+(compass_width+doubt), pt[1]+(compass_height+doubt)), (0, 0, 255), 2)
         loc = np.where(match >= threshold)
@@ -664,7 +682,6 @@ def get_navpoint_offset(testing=False, last=None):
         result = {'x': final_x, 'y': final_y}
     logging.debug('get_navpoint_offset='+str(result))
     return result
-
 
 # Get destination offset
 def get_destination_offset(testing=False):
