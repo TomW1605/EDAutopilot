@@ -60,7 +60,7 @@ Or if you'd like to set it up and run the script directly...
 _Requires **python 3** and **git**_
 1. Clone this repository
 ```sh
-> git clone https://github.com/skai2/EDAutopilot.git
+> git clone https://github.com/TomW1605/EDAutopilot.git
 ```
 2. Install requirements
 ```sh
