@@ -5,15 +5,16 @@ import kthread
 from PIL import Image
 from pystray import Icon, MenuItem, Menu
 
-from dev_autopilot import autopilot, resource_path, get_bindings, clear_input, set_scanner
+from dev_autopilot import autopilot, resource_path, get_bindings, clear_input, set_scanner, logging
 
 STATE = 0
 icon = None
 thread = None
 
+
 def setup(icon):
     icon.visible = True
-
+    logging.info('---- AUTOPILOT READY '+179*'-')
 
 def exit_action():
     stop_action()
@@ -22,11 +23,13 @@ def exit_action():
 
 
 def start_action():
-    stop_action()
+    logging.info('---- AUTOPILOT STARTING '+176*'-')
+    clear_input(get_bindings())
     kthread.KThread(target=autopilot, name="EDAutopilot").start()
 
 
 def stop_action():
+    logging.info('---- AUTOPILOT STOPPING '+176*'-')
     for thread in threading.enumerate():
         if thread.getName() == 'EDAutopilot':
             thread.kill()

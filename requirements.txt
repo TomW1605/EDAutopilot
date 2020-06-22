@@ -7,3 +7,6 @@ PyAutoGUI==0.9.42
 kthread==0.2.2
 keyboard==0.13.3
 Pillow==7.1.1
+matplotlib==3.2.1
+pynput==1.6.8
+opencv-python==4.2.0.34
