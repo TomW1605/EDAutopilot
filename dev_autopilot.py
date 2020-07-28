@@ -35,7 +35,7 @@ import numpy as np
 from PIL import ImageGrab
 from pyautogui import size  # see reference 6
 
-from src.directinput import SCANCODE, PressKey, ReleaseKey  # see reference 5
+from src.directinput import EDKeyCodes, PressKey, ReleaseKey  # see reference 5
 
 
 def resource_path(relative_path):
@@ -54,7 +54,7 @@ logging.basicConfig(filename='autopilot.log', level=logging.DEBUG)
 logger = colorlog.getLogger()
 logger.setLevel(logging.DEBUG)
 handler = logging.StreamHandler()
-handler.setLevel(logging.INFO)
+handler.setLevel(logging.DEBUG)
 handler.setFormatter(
     colorlog.ColoredFormatter('%(log_color)s%(levelname)-8s%(reset)s %(white)s%(message)s',
                               log_colors={
@@ -73,7 +73,8 @@ logger.info('This is an INFO message. These information is usually used for conv
 logger.warning('some warning message. These information is usually used for warning')
 logger.error('some error message. These information is usually used for errors and should not happen')
 logger.critical('some critical message. These information is usually used for critical error, and will usually result in an exception.')
-logging.info('\n'+200*'-'+'\n'+'---- AUTOPILOT DATA '+180*'-'+'\n'+200*'-')
+#logging.info('\n'+200*'-'+'\n'+'---- AUTOPILOT DATA '+180*'-'+'\n'+200*'-')
+logging.info('---- AUTOPILOT DATA '+180*'-')
 
 # Constants
 RELEASE = 'v19.05.15-alpha-18'
@@ -288,28 +289,18 @@ def get_bindings(keysToObtain=None):
                 new_key = item[1].attrib['Key']
                 if len(item[1]) > 0:
                     mod = item[1][0].attrib['Key']
-            # Adequate key to SCANCODE dict standard
-            if new_key in convert_to_direct_keys:
-                new_key = convert_to_direct_keys[new_key]
-            elif new_key is not None:
-                new_key = new_key[4:]
-            # Adequate mod to SCANCODE dict standard
-            if mod in convert_to_direct_keys:
-                mod = convert_to_direct_keys[mod]
-            elif mod is not None:
-                mod = mod[4:]
             # Prepare final binding
             binding = None
             if new_key is not None:
-                binding = {'pre_key': 'DIK_'+new_key.upper()}
-                binding['key'] = SCANCODE[binding['pre_key']]
+                binding = {'pre_key': new_key}
+                binding['key'] = EDKeyCodes[binding['pre_key']]
                 if mod is not None:
-                    binding['pre_mod'] = 'DIK_'+mod.upper()
-                    binding['mod'] = SCANCODE[binding['pre_mod']]
+                    binding['pre_mod'] = mod
+                    binding['mod'] = EDKeyCodes[binding['pre_mod']]
             if binding is not None:
                 direct_input_keys[item.tag] = binding
             #else:
-            #    logging.warning("get_bindings_<"+item.tag+">= does not have a valid keyboard keybind.")
+            #    logging.warning("get_bindings: "+item.tag+" = does not have a valid keyboard keybind.")
 
     if len(list(direct_input_keys.keys())) < 1:
         return None
@@ -320,59 +311,62 @@ def get_bindings(keysToObtain=None):
 keys = get_bindings()
 for key in keys_to_obtain:
     try:
-        logging.info('get_bindings_<'+str(key)+'>='+str(keys[key]))
+        logging.info('get_bindings: '+str(key)+' = '+str(keys[key]))
     except Exception as e:
-        logging.warning(str("get_bindings_<"+key+">= does not have a valid keyboard keybind.").upper())
+        logging.warning(str("get_bindings: "+key+" = does not have a valid keyboard keybind.").upper())
 
 
 # Direct input function
 
 # Send input
-def send(key_to_send, hold=None, repeat=1, repeat_delay=None, state=None):
-    global KEY_MOD_DELAY, KEY_DEFAULT_DELAY, KEY_REPEAT_DELAY
+def send(key_to_send, hold=None, repeat=1, repeat_delay=None, state=None, cv_testing=False):
+    if not cv_testing:
+        global KEY_MOD_DELAY, KEY_DEFAULT_DELAY, KEY_REPEAT_DELAY
 
-    if key_to_send is None:
-        logging.warning('SEND=NONE !!!!!!!!')
-        return
+        if key_to_send is None:
+            logging.warning('SEND=NONE !!!!!!!!')
+            return
 
-    logging.debug('send=key:'+str(key_to_send)+',hold:'+str(hold)+',repeat:'+str(repeat)+',repeat_delay:'+str(repeat_delay)+',state:'+str(state))
-    for i in range(repeat):
+        logging.debug('send=key:'+str(key_to_send)+',hold:'+str(hold)+',repeat:'+str(repeat)+',repeat_delay:'+str(repeat_delay)+',state:'+str(state))
+        for i in range(repeat):
 
-        if state is None or state == 1:
-            if 'mod' in key_to_send:
-                PressKey(key_to_send['mod'])
-                sleep(KEY_MOD_DELAY)
+            if state is None or state == 1:
+                if 'mod' in key_to_send:
+                    PressKey(key_to_send['mod'])
+                    sleep(KEY_MOD_DELAY)
 
-            PressKey(key_to_send['key'])
+                PressKey(key_to_send['key'])
 
-        if state is None:
-            if hold:
-                sleep(hold)
+            if state is None:
+                if hold:
+                    sleep(hold)
+                else:
+                    sleep(KEY_DEFAULT_DELAY)
+
+            if state is None or state == 0:
+                ReleaseKey(key_to_send['key'])
+
+                if 'mod' in key_to_send:
+                    sleep(KEY_MOD_DELAY)
+                    ReleaseKey(key_to_send['mod'])
+
+            if repeat_delay:
+                sleep(repeat_delay)
             else:
-                sleep(KEY_DEFAULT_DELAY)
-
-        if state is None or state == 0:
-            ReleaseKey(key_to_send['key'])
-
-            if 'mod' in key_to_send:
-                sleep(KEY_MOD_DELAY)
-                ReleaseKey(key_to_send['mod'])
-
-        if repeat_delay:
-            sleep(repeat_delay)
-        else:
-            sleep(KEY_REPEAT_DELAY)
+                sleep(KEY_REPEAT_DELAY)
 
 
 # Clear input
-def clear_input(to_clear=None):
-    logging.info('\n'+200*'-'+'\n'+'---- CLEAR INPUT '+183*'-'+'\n'+200*'-')
-    send(to_clear['SetSpeedZero'])
-    send(to_clear['MouseReset'])
-    for key_to_clear in to_clear.keys():
-        if key_to_clear in keys:
-            send(to_clear[key_to_clear], state=0)
-    logging.debug('clear_input')
+def clear_input(to_clear=None, cv_testing=False):
+    if not cv_testing:
+        #logging.info('\n'+200*'-'+'\n'+'---- CLEAR INPUT '+183*'-'+'\n'+200*'-')
+        logging.info('---- CLEAR INPUT '+183*'-')
+        send(to_clear['SetSpeedZero'])
+        send(to_clear['MouseReset'])
+        for key_to_clear in to_clear.keys():
+            if key_to_clear in keys:
+                send(to_clear[key_to_clear], state=0)
+        logging.debug('clear_input')
 
 
 # OpenCV
@@ -578,7 +572,7 @@ def sun_percent():
 
 
 # Get compass image
-def get_compass_image(testing=False):
+def get_compass_image(testing=True):
     if SCREEN_WIDTH == 3840:
         compass_template = cv2.imread(resource_path("templates/compass_3840.png"), cv2.IMREAD_GRAYSCALE)
     elif SCREEN_WIDTH == 2560:
@@ -587,12 +581,12 @@ def get_compass_image(testing=False):
         compass_template = cv2.imread(resource_path("templates/compass_1920.png"), cv2.IMREAD_GRAYSCALE)
     compass_width, compass_height = compass_template.shape[::-1]
     doubt = 10
-    screen = get_screen((5/16)*SCREEN_WIDTH, (5/8)*SCREEN_HEIGHT, (2/4)*SCREEN_WIDTH, (15/16)*SCREEN_HEIGHT)
+    screen = get_screen((4/16)*SCREEN_WIDTH, (10/16)*SCREEN_HEIGHT, (8/16)*SCREEN_WIDTH, (16/16)*SCREEN_HEIGHT)
     equalized = equalize(screen)
     match = cv2.matchTemplate(equalized, compass_template, cv2.TM_CCOEFF_NORMED)
     threshold = 0.2
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(match)
-    pt = (0, 0)
+    pt = (doubt, doubt)
     if max_val >= threshold:
         pt = max_loc
     compass_image = screen[pt[1]-doubt: pt[1]+compass_height+doubt, pt[0]-doubt: pt[0]+compass_width+doubt].copy()
@@ -605,10 +599,8 @@ def get_compass_image(testing=False):
             cv2.circle(match, p, 1, (0, 0, 255), 1)
         cv2.circle(match, pt, 5, (0, 255, 0), 3)
         cv2.imshow('Compass Found', screen)
-        cv2.imshow('Compass Mask', equalized)
+        #cv2.imshow('Compass Mask', equalized)
         cv2.imshow('Compass Match', match)
-        if compass_image.shape[0] > 0 and compass_image.shape[1] > 0:
-            cv2.imshow('Compass', compass_image)
         cv2.waitKey(1)
     return compass_image, compass_width+(2*doubt), compass_height+(2*doubt)
 
@@ -618,7 +610,7 @@ same_last_count = 0
 last_last = {'x': 1, 'y': 100}
 
 
-def get_navpoint_offset(testing=False, last=None):
+def get_navpoint_offset(testing=True, last=None):
     global same_last_count, last_last
     if SCREEN_WIDTH == 3840:
         navpoint_template = cv2.imread(resource_path("templates/navpoint_3840.png"), cv2.IMREAD_GRAYSCALE)
@@ -640,8 +632,15 @@ def get_navpoint_offset(testing=False, last=None):
     final_y = ((1/2)*compass_height)-(pt[1]+((1/2)*navpoint_height))
     if testing:
         cv2.rectangle(compass_image, pt, (pt[0]+navpoint_width, pt[1]+navpoint_height), (0, 0, 255), 2)
+        loc = np.where(match >= threshold)
+        pts = tuple(zip(*loc[::-1]))
+        match = cv2.cvtColor(match, cv2.COLOR_GRAY2RGB)
+        for p in pts:
+            cv2.circle(match, p, 1, (0, 0, 255), 1)
+        cv2.circle(match, pt, 5, (0, 255, 0), 3)
         cv2.imshow('Navpoint Found', compass_image)
-        # cv2.imshow('Navpoint Mask', filtered)
+        cv2.imshow('Navpoint Mask', filtered)
+        cv2.imshow('Navpoint Match', match)
         cv2.waitKey(1)
     if pt == (0, 0):
         if last:
@@ -687,10 +686,20 @@ def get_destination_offset(testing=False):
         pt = max_loc
     final_x = (pt[0]+((1/2)*destination_width))-((1/2)*width)
     final_y = ((1/2)*height)-(pt[1]+((1/2)*destination_height))
+    pt2 = (int(final_x), int(final_y))
+    print(pt2)
     if testing:
         cv2.rectangle(screen, pt, (pt[0]+destination_width, pt[1]+destination_height), (0, 0, 255), 2)
+        loc = np.where(match >= threshold)
+        pts = tuple(zip(*loc[::-1]))
+        match = cv2.cvtColor(match, cv2.COLOR_GRAY2RGB)
+        for p in pts:
+            cv2.circle(match, p, 1, (0, 0, 255), 1)
+        cv2.circle(match, pt, 5, (0, 255, 0), 3)
+        cv2.circle(screen, pt, 5, (0, 255, 0), 3)
         cv2.imshow('Destination Found', screen)
         cv2.imshow('Destination Mask', filtered)
+        cv2.imshow('Destination Match', match)
         cv2.waitKey(1)
     if pt == (0, 0):
         result = None
@@ -783,7 +792,7 @@ def x_angle(point=None):
 
 
 def align():
-    logging.debug('align')
+    logging.info('Starting Alignment')
     if not (ship()['status'] == 'in_supercruise' or ship()['status'] == 'in_space'):
         logging.error('align=err1')
         raise Exception('align error 1')
@@ -791,19 +800,19 @@ def align():
     logging.debug('align=speed 100')
     send(keys['SetSpeed100'])
 
-    logging.debug('align=avoid sun')
+    logging.info('Alignment Step: Avoid sun')
     while sun_percent() > 5:
         send(keys['PitchUpButton'], state=1)
     send(keys['PitchUpButton'], state=0)
 
-    logging.debug('align=find navpoint')
+    logging.info('Alignment Step: Find navpoint')
     off = get_navpoint_offset()
     while not off:
         send(keys['PitchUpButton'], state=1)
         off = get_navpoint_offset()
     send(keys['PitchUpButton'], state=0)
 
-    logging.debug('align=crude align')
+    logging.info('Alignment Step: Crude align')
     close = 3
     close_a = 18
     hold_pitch = 0.350
@@ -837,7 +846,7 @@ def align():
         off = get_navpoint_offset(last=off)
         ang = x_angle(off)
 
-    logging.debug('align=fine align')
+    logging.info('Alignment Step: Fine align')
     sleep(0.5)
     close = 50
     hold_pitch = 0.200
@@ -873,12 +882,12 @@ def align():
         if not off:
             return
 
-    logging.debug('align=complete')
+    logging.info('Alignment Complete')
 
 
 # Jump
 def jump():
-    logging.debug('jump')
+    logging.info('Starting Jump')
     tries = 3
     for i in range(tries):
         logging.debug('jump=try:'+str(i))
@@ -886,28 +895,28 @@ def jump():
             logging.error('jump=err1')
             raise Exception('not ready to jump')
         sleep(0.5)
-        logging.debug('jump=start fsd')
+        logging.info('Charging FSD')
         send(keys['HyperSuperCombination'], hold=1)
         sleep(16)
         if ship()['status'] != 'starting_hyperspace':
-            logging.debug('jump=misalign stop fsd')
+            logging.info('Trajectory Misaligned. Jump Failed. Retrying Alignment')
             send(keys['HyperSuperCombination'], hold=1)
             sleep(2)
             align()
         else:
-            logging.debug('jump=in jump')
+            logging.info('Jump in Progress')
             while ship()['status'] != 'in_supercruise':
                 sleep(1)
             logging.debug('jump=speed 0')
             send(keys['SetSpeedZero'])
-            logging.debug('jump=complete')
+            logging.info('Jump Complete')
             return True
     logging.error('jump=err2')
     raise Exception("jump failure")
 
 
 # Refuel
-def refuel(refuel_threshold=33):
+def refuel(refuel_threshold=40):
     logging.debug('refuel')
     scoopable_stars = ['F', 'O', 'G', 'K', 'B', 'A', 'M']
     if ship()['status'] != 'in_supercruise':
@@ -915,33 +924,33 @@ def refuel(refuel_threshold=33):
         return False
 
     if ship()['fuel_percent'] < refuel_threshold and ship()['star_class'] in scoopable_stars:
-        logging.debug('refuel=start refuel')
+        logging.info('Starting Refuel')
         send(keys['SetSpeed100'])
         sleep(4)
-        logging.debug('refuel=wait for refuel')
+        logging.info('Refuel in Progress')
         send(keys['SetSpeedZero'], repeat=3)
         while not ship()['fuel_percent'] == 100:
             sleep(1)
-        logging.debug('refuel=complete')
+        logging.info('Refuel Complete')
         return True
     elif ship()['fuel_percent'] >= refuel_threshold:
-        logging.debug('refuel=not needed')
+        logging.info('Refuel not Needed')
         return False
     elif ship()['star_class'] not in scoopable_stars:
-        logging.debug('refuel=needed, unsuitable star')
+        logging.info('Refuel Needed, Unsuitable Star')
         return False
     else:
         return False
 
 
 # Discovery scanner
-scanner = 0
+scanner = 1
 
 
 def set_scanner(state):
     global scanner
     scanner = state
-    logging.info('set_scanner='+str(scanner))
+    logging.debug('set_scanner='+str(scanner))
 
 
 def get_scanner():
@@ -952,13 +961,15 @@ def get_scanner():
 # Position
 def position(refueled_multiplier=1):
     logging.debug('position')
-    scan = get_scanner()
+    scan = 2 #get_scanner()
     if scan == 1:
-        logging.debug('position=scanning')
+        logging.info('Scanning')
         send(keys['PrimaryFire'], state=1)
     elif scan == 2:
-        logging.debug('position=scanning')
+        logging.info('Scanning')
         send(keys['SecondaryFire'], state=1)
+    else:
+        logging.info('Scanning Disabled')
     send(keys['PitchUpButton'], state=1)
     sleep(5)
     send(keys['PitchUpButton'], state=0)
@@ -970,10 +981,10 @@ def position(refueled_multiplier=1):
     send(keys['PitchUpButton'], state=0)
     sleep(5*refueled_multiplier)
     if scan == 1:
-        logging.debug('position=scanning complete')
+        logging.info('Scanning Complete')
         send(keys['PrimaryFire'], state=0)
     elif scan == 2:
-        logging.debug('position=scanning complete')
+        logging.info('Scanning Complete')
         send(keys['SecondaryFire'], state=0)
     logging.debug('position=complete')
     return True
@@ -999,21 +1010,27 @@ def position(refueled_multiplier=1):
 
 
 def autopilot():
-    logging.info('\n'+200*'-'+'\n'+'---- AUTOPILOT START '+179*'-'+'\n'+200*'-')
-    logging.info('get_latest_log='+str(get_latest_log(PATH_LOG_FILES)))
+    #logging.info('\n'+200*'-'+'\n'+'---- AUTOPILOT START '+179*'-'+'\n'+200*'-')
+    logging.info('---- AUTOPILOT START '+179*'-')
+    logging.debug('get_latest_log='+str(get_latest_log(PATH_LOG_FILES)))
     logging.debug('ship='+str(ship()))
     while ship()['target']:
         if ship()['status'] == 'in_space' or ship()['status'] == 'in_supercruise':
-            logging.info('\n'+200*'-'+'\n'+'---- AUTOPILOT ALIGN '+179*'-'+'\n'+200*'-')
+            #logging.info('\n'+200*'-'+'\n'+'---- AUTOPILOT ALIGN '+179*'-'+'\n'+200*'-')
+            logging.info('---- AUTOPILOT ALIGN '+179*'-')
             align()
-            logging.info('\n'+200*'-'+'\n'+'---- AUTOPILOT JUMP '+180*'-'+'\n'+200*'-')
+            #logging.info('\n'+200*'-'+'\n'+'---- AUTOPILOT JUMP '+180*'-'+'\n'+200*'-')
+            logging.info('---- AUTOPILOT JUMP '+180*'-')
             jump()
-            logging.info('\n'+200*'-'+'\n'+'---- AUTOPILOT REFUEL '+178*'-'+'\n'+200*'-')
+            #logging.info('\n'+200*'-'+'\n'+'---- AUTOPILOT REFUEL '+178*'-'+'\n'+200*'-')
+            logging.info('---- AUTOPILOT REFUEL '+178*'-')
             refueled = refuel()
-            logging.info('\n'+200*'-'+'\n'+'---- AUTOPILOT POSIT '+179*'-'+'\n'+200*'-')
+            #logging.info('\n'+200*'-'+'\n'+'---- AUTOPILOT POSIT '+179*'-'+'\n'+200*'-')
+            logging.info('---- AUTOPILOT SCAN '+180*'-')
             if refueled:
                 position(refueled_multiplier=4)
             else:
                 position(refueled_multiplier=1)
     send(keys['SetSpeedZero'])
-    logging.info('\n'+200*'-'+'\n'+'---- AUTOPILOT END '+181*'-'+'\n'+200*'-')
+    #logging.info('\n'+200*'-'+'\n'+'---- AUTOPILOT END '+181*'-'+'\n'+200*'-')
+    logging.info('---- AUTOPILOT END '+181*'-')
