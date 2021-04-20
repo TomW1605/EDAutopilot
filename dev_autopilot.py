@@ -288,7 +288,7 @@ def get_bindings(keysToObtain=None):
                 new_key = item[1].attrib['Key']
                 if len(item[1]) > 0:
                     mod = item[1][0].attrib['Key']
-               else:
+                else:
                     mod = None
             # Adequate key to SCANCODE dict standard
             if new_key in convert_to_direct_keys:
