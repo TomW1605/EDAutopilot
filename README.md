@@ -1,4 +1,4 @@
-## Stale Fork
+# Stale Fork
 
 This fork is mostly stale. I recomend using and working from BinaryEnigma's fork here: https://github.com/BinaryEnigma01/EDAutopilot
 
